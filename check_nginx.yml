@@ -1,0 +1,22 @@
+- hosts: webservers
+  become: true
+  tasks:
+
+    - name: Ensure the log file exists
+      file:
+        path: /var/log/monitor_resources
+        state: touch
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Check if nginx is running
+      shell: pgrep nginx
+      register: nginx_proc
+      ignore_errors: true
+
+    - name: Log if nginx is not running
+      lineinfile:
+        path: /var/log/monitor_resources
+        line: "NGINX DOWN @ {{ ansible_date_time.iso8601 }}"
+      when: nginx_proc.rc != 0
