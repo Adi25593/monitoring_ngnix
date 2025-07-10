@@ -1,0 +1,7 @@
+- hosts: localhost
+  tasks:
+    - name: Add cron job for hourly monitoring
+      cron:
+        name: "Monitor nginx and resources hourly"
+        job: "/home/ubuntu/project/run_monitoring.sh"
+        minute: "0"
