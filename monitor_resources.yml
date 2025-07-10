@@ -1,0 +1,31 @@
+- hosts: webservers
+  become: true
+  tasks:
+
+    - name: Ensure the log file exists
+      file:
+        path: /var/log/monitor_resources
+        state: touch
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Check disk usage
+      shell: df / | tail -1 | awk '{print $5}' | sed 's/%//'
+      register: disk_usage
+
+    - name: Check memory usage
+      shell: free | awk '/Mem:/ {printf("%.0f", ($3/$2)*100)}'
+      register: memory_usage
+
+    - name: Log high disk usage
+      lineinfile:
+        path: /var/log/monitor_resources
+        line: "DISK >90%: {{ disk_usage.stdout }}% @ {{ ansible_date_time.iso8601 }}"
+      when: disk_usage.stdout | int > 90
+
+    - name: Log high memory usage
+      lineinfile:
+        path: /var/log/monitor_resources
+        line: "MEMORY >90%: {{ memory_usage.stdout }}% @ {{ ansible_date_time.iso8601 }}"
+      when: memory_usage.stdout | int > 90
